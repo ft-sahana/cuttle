@@ -497,27 +497,27 @@ export const useGameStore = defineStore('game', () => {
     });
   }
   async function requestGameState(gameId, gameStateIndex = -1, route = null, resetStateBeforeUpdate = false) {
-  const slug = `${gameId}?gameStateIndex=${gameStateIndex}`;
+    const slug = `${gameId}?gameStateIndex=${gameStateIndex}`;
 
-  try {
-    if (resetStateBeforeUpdate) {
-      resetState();
+    try {
+      if (resetStateBeforeUpdate) {
+        resetState();
+      }
+
+      const res = await makeSocketRequest(slug, {}, 'GET', true);
+
+      updateGame(res.body.game);
+      return await handleInGameEvents(res.body, route);
+    } catch (err) {
+      if (authStore.mustReauthenticate) {
+        id.value = gameId;
+        return null;
+      }
+
+      const message = err?.message ?? err ?? `Unable to get game state for game ${gameId}`;
+      throw new Error(message);
     }
-
-    const res = await makeSocketRequest(slug, {}, 'GET', true);
-
-    updateGame(res.body.game);
-    return await handleInGameEvents(res.body, route);
-  } catch (err) {
-    if (authStore.mustReauthenticate) {
-      id.value = gameId;
-      return null;
     }
-
-    const message = err?.message ?? err ?? `Unable to get game state for game ${gameId}`;
-    throw new Error(message);
-  }
-  }
   async function requestSpectate(gameId, gameStateIndex = 0, route = null) {
     const slug = `${gameId}/spectate?gameStateIndex=${gameStateIndex}`;
     try {
